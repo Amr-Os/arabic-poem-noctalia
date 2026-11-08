@@ -1,7 +1,7 @@
 [[plugin]]
 id           = "amr/arabic-poem"
 name         = "Arabic Poem"
-version      = "1.0.0"
+version      = "1.1.0"
 author       = "amr"
 license      = "MIT"
 icon         = "book"
@@ -14,7 +14,7 @@ dependencies = [
   "python3-gobject (PyGObject)",
   "gir1.2-pango-1.0",
   "gir1.2-cairo-1.0",
-  "hijridate (Python package)",
   "fontconfig",
-  "Amiri / Amiri Quran fonts",
+  "Amiri / Amiri Quran fonts (bundled; auto-installed)",
+  "hijridate (optional; bundled Umm al-Qura fallback)",
 ]

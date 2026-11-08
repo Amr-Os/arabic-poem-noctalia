@@ -31,13 +31,15 @@ Noctalia الراسم، وتعرض الودجات الثلاث صور PNG الت
 ## المتطلبات
 
 - Noctalia v5 مع Plugin API 3 أو أحدث.
-- niri (أي مدير تركيبات Wayland يجب أن يعمل؛ هذا بُني لـ niri).
+- أي مدير تركيبات Wayland (niri أو غيره).
 - Python 3.10+ مع:
   - PyGObject ووحدات GI لـ Pango/PangoCairo
   - pycairo
-  - `hijridate` (اسم الاستيراد القديم `hijri_converter` يعمل أيضًا)
 - fontconfig
-- الخطّان Amiri وAmiri Quran (مضمّنان؛ ثبّتهما بـ `./install.sh --fonts`)
+- الخطّان Amiri وAmiri Quran مضمّنان، وتنسخهما الإضافة تلقائيًا إلى مجلد
+  خطوط المستخدم عند أول تشغيل. لا تحتاج إلى `install.sh --fonts`.
+- `hijridate` **اختياري**: الإضافة تحمل نسخة احتياطية مضمّنة لتقويم أم القرى،
+  لذا لا تحتاج إلى `pip install` لتثبيت الإضافة من الواجهة.
 
 تختلف أسماء الحزم بين التوزيعات. حزم شائعة:
 
@@ -49,51 +51,99 @@ sudo pacman -S python python-gobject pango cairo fontconfig
 sudo dnf install python3 python3-gobject pango cairo fontconfig
 
 # Debian / Ubuntu
-sudo apt install python3 python3-gi gir1.2-pango-1.0 gir1.2-cairo-1.0 libcairo2 fontconfig
-```
-
-ثبّت اعتماد Python كالمستخدم:
-
-```sh
-python3 -m pip install --user hijridate
+sudo apt install python3 python3-gi python3-cairo gir1.2-pango-1.0 libcairo2 fontconfig
 ```
 
 إذا كان `python3` في مكان غير معتاد، اضبط إعداد **Python command** في الإضافة
-على ذلك المفسّر (أو اضبط `PYTHON=/path/to/python3` عند تشغيل `install.sh`).
+على ذلك المفسّر.
 
-## التثبيت اليدوي
+## التثبيت من واجهة Noctalia (الطريقة الأساسية)
 
-هذه الأوامر تُنفّذ **على الجهاز الذي يعمل عليه Noctalia**. لا يستخدم السكربت
-sudo ولا يثبّت حزم التوزيعة.
+لا تحتاج إلى `git clone` ولا إلى `install.sh`. أضف المستودع كمصدر ثم ثبّت
+الإضافة من واجهة Noctalia نفسها:
+
+1. افتح **Settings → Plugins → Sources**.
+2. اضغط **Add Source**.
+3. اكتب اسمًا للمصدر، مثل `arabic-poem`.
+4. اختر النوع **Git**.
+5. ضع رابط المستودع:
+
+   ```text
+   https://github.com/Amr-Os/arabic-poem-noctalia.git
+   ```
+
+6. احفظ المصدر.
+7. ارجع إلى **Settings → Plugins**، وابحث عن **Arabic Poem**، ثم فعّل
+   المفتاح المقابل له.
+   - إذا لم تظهر الإضافة مباشرة، اضغط **Update** على المصدر أو أعد فتح
+     صفحة الإضافات.
+8. أضف الودجات الثلاث من **Settings → Desktop → Widgets**، أو نفّذ:
+
+   ```sh
+   noctalia msg desktop-widgets-edit
+   ```
+
+اسم المصدر (`arabic-poem`) مجرد تسمية محلية. معرّف الإضافة هو
+`amr/arabic-poem`.
+
+عند أول تشغيل للخدمة، ينسخ الراسم الخطّين المضمّنين إلى
+`~/.local/share/fonts/Amiri` ويشغّل `fc-cache` تلقائيًا. لا تحتاج إلى خطوة
+خطوط منفصلة.
+
+### بديل عبر الطرفية
+
+هذا نفس مسار الواجهة، لكن من الطرفية:
 
 ```sh
-git clone https://github.com/Amr-Os/arabic-poem-noctalia.git
-cd arabic-poem-noctalia
-
-# ١. اعرض ما ينقص. أصلح أسطر الفشل (fail) قبل المتابعة.
-./install.sh --check
-
-# ٢. ثبّت الخطّين Amiri / Amiri Quran المضمّنين (OFL) لمستخدمك.
-./install.sh --fonts
-
-# ٣. أنشئ معاينة مستقلة لتفحص صور PNG فورًا.
-./install.sh --preview
-
-# ٤. أضف هذا المستودع كمصدر Noctalia وفعّل الإضافة.
-./install.sh --source
-./install.sh --enable
-```
-
-الأوامر اليدوية المكافئة:
-
-```sh
-noctalia msg plugins source add arabic-poem path "$PWD"
+noctalia msg plugins source add arabic-poem git https://github.com/Amr-Os/arabic-poem-noctalia.git
 noctalia msg plugins enable amr/arabic-poem
 noctalia msg plugins list
 ```
 
-اسم المصدر (`arabic-poem`) مجرد تسمية محلية. معرّف الإضافة هو
-`amr/arabic-poem`.
+`install.sh` بقي كأداة اختيارية للفحص أو المعاينة أو استكشاف الأخطاء فقط:
+
+```sh
+./install.sh --check
+./install.sh --preview
+```
+
+## NixOS
+
+على NixOS، `python3` العادي لا يضع Pango/PangoCairo في `GI_TYPELIB_PATH`،
+فتظهر أخطاء مثل:
+
+```text
+Namespace Pango not available
+Typelib file for namespace 'Pango' not found
+```
+
+الحل الجاهز في [`nix/arabic-poem-python.nix`](nix/arabic-poem-python.nix):
+غلاف Python يضمّ PyGObject وpycairo، ويضبط `GI_TYPELIB_PATH` لـ Pango
+وPangoCairo وcairo وGLib، ويضع `fontconfig` على `PATH` حتى يعمل `fc-cache`
+عند نسخ الخطوط تلقائيًا.
+
+مثال مختصر داخل إعداد NixOS:
+
+```nix
+{ pkgs, ... }:
+let
+  poemPython = pkgs.callPackage ./nix/arabic-poem-python.nix { };
+in
+{
+  environment.systemPackages = [ poemPython pkgs.fontconfig ];
+  fonts.packages = [ pkgs.amiri ]; # اختياري؛ الإضافة تنسخ Amiri Quran بنفسها
+}
+```
+
+بعد `nixos-rebuild switch`، اجعل **Python command** في إعدادات الإضافة:
+
+```text
+/run/current-system/sw/bin/arabic-poem-python
+```
+
+ثم أعد تفعيل الإضافة. لا تضع `python3` المجرّد، لأن وحدة Noctalia في NixOS
+تمسح `PATH` الخاص بالخدمة. التفاصيل الكاملة، ومثال Home Manager، وخطوات
+التحقق: [`NIXOS.md`](NIXOS.md).
 
 ### إضافة الودجات الثلاث
 
@@ -285,8 +335,9 @@ noctalia msg plugin amr/arabic-poem:service all refresh
 - Amiri Quran
 
 كلاهما تحت رخصة SIL Open Font License؛ انظر `arabic-poem/fonts/OFL.txt`.
-ينسخ `./install.sh --fonts` الخطّين إلى `~/.local/share/fonts/Amiri` ويشغّل
-`fc-cache`.
+تنسخ الإضافة الخطّين تلقائيًا إلى `~/.local/share/fonts/Amiri` وتشغّل
+`fc-cache` عند أول تشغيل. إذا احتجت إلى ذلك يدويًا، استخدم
+`./install.sh --fonts`.
 
 الخطوط الاختيارية **غير** مضمّنة:
 
@@ -304,8 +355,21 @@ Rubik القديمة هي بالضبط ما يتجنبه هذا الراسم.
 
 **`./install.sh --check` يفشل**
 
-ثبّت حزم التوزيعة الناقصة و`hijridate`، ثم أعد التشغيل. يطبع الفحص خطأ استيراد
-Python بدقة.
+ثبّت حزم التوزيعة الناقصة، ثم أعد التشغيل. يطبع الفحص خطأ استيراد Python
+بدقة. `hijridate` لم يعد مطلوبًا لأن الإضافة تحمل نسخة احتياطية مضمّنة.
+
+**`Namespace Pango not available` أو `Typelib file for namespace 'Pango' not found`**
+
+هذا خطأ NixOS شائع. استخدم غلاف
+[`nix/arabic-poem-python.nix`](nix/arabic-poem-python.nix) واضبط **Python
+command** على `/run/current-system/sw/bin/arabic-poem-python`، ثم أعد تفعيل
+الإضافة. اختبره بـ:
+
+```sh
+arabic-poem-python -c 'import gi; gi.require_version("Pango", "1.0"); gi.require_version("PangoCairo", "1.0"); from gi.repository import Pango, PangoCairo; print("Pango ok")'
+```
+
+انظر [`NIXOS.md`](NIXOS.md) للتفاصيل.
 
 **ودجة القصيدة فارغة**
 
@@ -321,9 +385,9 @@ fc-match 'Amiri Quran'
 fc-match 'Amiri'
 ```
 
-ثبّت الخطوط المضمّنة بـ `./install.sh --fonts` وشغّل `fc-cache -f`. يعود
-الراسم إلى Amiri، ثم Noto Naskh Arabic، ثم DejaVu Sans؛ وإذا لم يوجد أي منها
-برموز عربية فسترى مربعات.
+إذا لم تُنسخ الخطوط تلقائيًا، شغّل `./install.sh --fonts` ثم `fc-cache -f`.
+يعود الراسم إلى Amiri، ثم Noto Naskh Arabic، ثم DejaVu Sans؛ وإذا لم يوجد أي
+منها برموز عربية فسترى مربعات.
 
 **لا يدوّر أبدًا**
 
@@ -338,9 +402,9 @@ noctalia msg plugin amr/arabic-poem:service all status
 
 **التاريخ متأخر يومًا**
 
-`hijridate` يستخدم تقويم أم القرى. يستخدم الراسم التاريخ الميلادي المحلي. تحقق
-بـ `--test` و`--date-only`؛ وإذا كانت ساعة النظام أو المنطقة الزمنية خاطئة،
-أصلح ذلك أولًا.
+يستخدم الراسم تقويم أم القرى (عبر `hijridate` إن وُجد، أو النسخة المضمّنة
+الاحتياطية). يستخدم التاريخ الميلادي المحلي. تحقق بـ `--test` و`--date-only`؛
+وإذا كانت ساعة النظام أو المنطقة الزمنية خاطئة، أصلح ذلك أولًا.
 
 **لا تتحدّث الودجات بعد رسم يدوي**
 
@@ -363,13 +427,17 @@ noctalia msg plugin amr/arabic-poem:service all status
 ```text
 arabic-poem-noctalia/
   catalog.toml                 # كتالوج مصدر Noctalia
-  install.sh                   # مساعد يدوي (check/fonts/preview/source/enable)
+  install.sh                   # مساعد اختياري (check/fonts/preview/source/enable)
   docs/preview.png             # معاينة README
+  NIXOS.md                     # تعليمات NixOS وحل مشكلة Pango GI
+  nix/
+    arabic-poem-python.nix     # غلاف Python يضبط GI_TYPELIB_PATH وfontconfig
   TESTING.md                   # قائمة اختبار الصديق
   arabic-poem/
     plugin.toml                # بيان Noctalia (Plugin API 3)
     entries/                   # الخدمة + 3 ودجات سطح مكتب + زر الشريط
     renderer/                  # راسم Python/Pango
+    renderer/hijri_fallback.py # نسخة أم القرى الاحتياطية (دون pip)
     data/poems.json            # مجموعة القصائد الـ36
     data/config.default.json   # الإعدادات الافتراضية للراسم
     fonts/                     # الخطّان Amiri / Amiri Quran المضمّنان (OFL)

@@ -10,6 +10,7 @@ import json
 import os
 import random
 import re
+import shutil
 import subprocess
 import unicodedata
 import urllib.request
@@ -289,6 +290,53 @@ def font_available(family: str) -> bool:
     wanted = family.lower()
     # Generic names such as "sans" are intentionally treated as available.
     return wanted in found or wanted in {"sans", "serif", "monospace"}
+
+
+def ensure_bundled_fonts(plugin_dir: Path) -> list[str]:
+    """Install the bundled OFL fonts when fontconfig cannot find them.
+
+    A Noctalia UI install only exports the plugin directory; it does not run
+    ``install.sh``.  Copying the fonts into the user font directory on first
+    render keeps the UI-only installation path self-contained.
+    """
+    required = ("Amiri Quran", "Amiri")
+    if all(font_available(name) for name in required):
+        return []
+
+    source_dir = plugin_dir / "fonts"
+    sources = [source_dir / "amiri-quran.ttf"]
+    sources.extend(sorted((source_dir / "Amiri").glob("*.ttf")))
+    sources = [path for path in sources if path.is_file()]
+    if not sources:
+        return []
+
+    data_home = Path(os.environ.get("XDG_DATA_HOME", str(HOME / ".local/share")))
+    font_dir = data_home / "fonts" / "Amiri"
+    try:
+        ensure_dir(font_dir)
+        for source in sources:
+            destination = font_dir / source.name
+            try:
+                if (
+                    not destination.exists()
+                    or destination.stat().st_size != source.stat().st_size
+                ):
+                    shutil.copy2(source, destination)
+            except OSError:
+                pass
+        try:
+            subprocess.run(
+                ["fc-cache", "-f", str(font_dir.parent)],
+                check=False,
+                capture_output=True,
+                timeout=20,
+            )
+        except Exception:
+            pass
+        getattr(font_available, "cache_clear", lambda: None)()
+        return [name for name in required if font_available(name)]
+    except OSError:
+        return []
 
 
 def resolve_font(family: str, fallback: str | None = None) -> str:

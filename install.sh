@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# Manual installation helper for the Arabic Poem Noctalia plugin.
+# Optional installation/diagnostic helper for the Arabic Poem Noctalia plugin.
 #
-# This script never uses sudo and never installs packages for you.  It checks
-# dependencies, copies the bundled OFL fonts into your user font directory, and
-# runs the Noctalia CLI commands needed to add and enable the plugin.
+# The recommended install is Noctalia's UI:
+#   Settings -> Plugins -> Sources -> Add Source
+# then enable Arabic Poem from Settings -> Plugins.
+#
+# This script never uses sudo and never installs packages for you.  It can check
+# dependencies, copy the bundled OFL fonts, render a preview, and add the source
+# from the CLI as a fallback.
 set -u
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -16,23 +20,31 @@ FAILED=0
 
 usage() {
   cat <<EOF
-Arabic Poem for Noctalia — manual installer
+Arabic Poem for Noctalia — optional helper
+
+Recommended install:
+  Settings -> Plugins -> Sources -> Add Source
+  Name: arabic-poem, kind: Git
+  URL: https://github.com/Amr-Os/arabic-poem-noctalia.git
+  Then enable Arabic Poem in Settings -> Plugins.
 
 Usage:
-  ./install.sh --check     Check Python/Pango/Cairo/hijridate, fontconfig, fonts
-  ./install.sh --fonts     Copy bundled Amiri / Amiri Quran fonts to ~/.local/share/fonts/Amiri
-  ./install.sh --preview   Render one poem/weekday/date into ~/.local/share/arabic-poem
-  ./install.sh --source    Add this repository as a Noctalia path source
-  ./install.sh --enable    Enable amr/arabic-poem in Noctalia
-  ./install.sh --status    Ask the running service for its status notification
-  ./install.sh --all       check + fonts + preview + source + enable
+  ./install.sh --check        Check Python/Pango/Cairo, fontconfig, fonts
+  ./install.sh --fonts        Copy bundled Amiri / Amiri Quran fonts to ~/.local/share/fonts/Amiri
+  ./install.sh --preview      Render one poem/weekday/date into ~/.local/share/arabic-poem
+  ./install.sh --source       Add this repository as a Noctalia git source
+  ./install.sh --source-path  Add this checkout as a path source (development)
+  ./install.sh --enable       Enable amr/arabic-poem in Noctalia
+  ./install.sh --status       Ask the running service for its status notification
+  ./install.sh --all          check + fonts + preview + source + enable
 
 Environment:
-  PYTHON=/path/to/python3   Interpreter to use (default: python3)
-  XDG_DATA_HOME=...         Base for the user font and preview directories
+  PYTHON=/path/to/python3              Interpreter to use (default: python3)
+  ARABIC_POEM_SOURCE_URL=...           Override the git source URL
+  XDG_DATA_HOME=...                    Base for the user font and preview directories
 
-This helper does not install system packages.  See README.md for the distro
-package names and for the desktop-widget/keybind steps.
+This helper does not install system packages.  See README.md for distro package
+names and NIXOS.md for the NixOS wrapper (Pango GI typelibs).
 EOF
 }
 
@@ -56,6 +68,7 @@ bad() {
 font_state() {
   family=$1
   required=$2
+  hint=${3:-optional; the renderer falls back to Amiri}
   found=$(fc-match -f '%{family}' "$family" 2>/dev/null | head -n 1)
   lower=$(printf '%s' "$found" | tr '[:upper:]' '[:lower:]')
   want=$(printf '%s' "$family" | tr '[:upper:]' '[:lower:]')
@@ -67,7 +80,7 @@ font_state() {
       if [ "$required" = "yes" ]; then
         bad "$family not found (fontconfig returned: ${found:-nothing})"
       else
-        warn "$family not installed (optional; the renderer falls back to Amiri)"
+        warn "$family not installed ($hint)"
       fi
       ;;
   esac
@@ -142,10 +155,8 @@ except ImportError:
     try:
         import hijri_converter  # noqa: F401
         print("  ok    hijri_converter (legacy name)")
-    except ImportError as exc:
-        print(f"  fail  hijridate: {exc}")
-        print("        python3 -m pip install --user hijridate")
-        failed = True
+    except ImportError:
+        print("  ok    hijridate not installed; bundled Umm al-Qura fallback will be used")
 
 sys.exit(1 if failed else 0)
 PY
@@ -157,8 +168,8 @@ PY
 
   echo
   echo "Fonts:"
-  font_state "Amiri Quran" yes
-  font_state "Amiri" yes
+  font_state "Amiri Quran" no "bundled; will be installed on first render"
+  font_state "Amiri" no "bundled; will be installed on first render"
   font_state "PanoramaNaskh" no
   font_state "Shafigh Bakh Thin MOB V2" no
   font_state "thmanyah serif display" no
@@ -205,7 +216,17 @@ add_source() {
     echo "noctalia is not on PATH; add it first." >&2
     return 1
   fi
-  echo "Adding source 'arabic-poem' -> $ROOT"
+  url=${ARABIC_POEM_SOURCE_URL:-https://github.com/Amr-Os/arabic-poem-noctalia.git}
+  echo "Adding git source 'arabic-poem' -> $url"
+  noctalia msg plugins source add arabic-poem git "$url"
+}
+
+add_source_path() {
+  if ! need noctalia; then
+    echo "noctalia is not on PATH; add it first." >&2
+    return 1
+  fi
+  echo "Adding development path source 'arabic-poem' -> $ROOT"
   noctalia msg plugins source add arabic-poem path "$ROOT"
 }
 
@@ -257,6 +278,9 @@ case "${1:---help}" in
     ;;
   --source)
     add_source
+    ;;
+  --source-path)
+    add_source_path
     ;;
   --enable)
     enable_plugin

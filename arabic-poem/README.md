@@ -27,13 +27,27 @@ The 36-poem corpus, themes, and tashkeel settings are in
 `data/poems.json`. The default fonts are Amiri Quran and Amiri; PanoramaNaskh,
 Shafigh, and Thmanyah are optional and fall back to Amiri.
 
-## Install
+## Install from Noctalia's UI
 
-```sh
-noctalia msg plugins source add arabic-poem path /path/to/arabic-poem-noctalia
-noctalia msg plugins enable amr/arabic-poem
-noctalia msg desktop-widgets-edit
-```
+This is the recommended install path. You do not need to clone the repository or
+run `install.sh`.
+
+1. Open **Settings → Plugins → Sources**.
+2. Click **Add Source**.
+3. Name it `arabic-poem` (the name is only local).
+4. Choose **Git**.
+5. Use this URL:
+
+   ```text
+   https://github.com/Amr-Os/arabic-poem-noctalia.git
+   ```
+
+6. Save the source.
+7. Go back to **Settings → Plugins**, find **Arabic Poem**, and enable it.
+   If it is not listed yet, press **Update** on the source or reopen the plugin
+   page.
+8. Add the three desktop widget types from **Settings → Desktop → Widgets**
+   (or run `noctalia msg desktop-widgets-edit`).
 
 Add the three desktop widget types and turn **Background off** on each tile:
 
@@ -43,6 +57,16 @@ Add the three desktop widget types and turn **Background off** on each tile:
 
 Suggested placement on one monitor: poem top-right; weekday bottom-left above
 the date; date bottom-left.
+
+The service copies the bundled Amiri fonts into your user font directory on its
+first render, so the UI install does not require a separate font step.
+
+### CLI alternative
+
+```sh
+noctalia msg plugins source add arabic-poem git https://github.com/Amr-Os/arabic-poem-noctalia.git
+noctalia msg plugins enable amr/arabic-poem
+```
 
 Manual rotation:
 
@@ -76,14 +100,32 @@ noctalia msg plugin amr/arabic-poem:service all status
 
 ## Requirements
 
-Noctalia v5 with plugin API 3+, Python 3 with PyGObject/Pango/Cairo, the
-`hijridate` Python package, fontconfig, and Amiri/Amiri Quran. The repository
-root has an `install.sh` helper that checks dependencies, installs the bundled
-OFL fonts for your user, renders a preview, and runs the source/enable
-commands. It does not use sudo or install distro packages.
+Noctalia v5 with plugin API 3+, Python 3 with PyGObject/Pango/Cairo, and
+fontconfig. The bundled Amiri/Amiri Quran fonts are installed automatically on
+first run. `hijridate` is optional; the plugin includes a Umm al-Qura fallback,
+so no `pip install` is required for a UI-only install.
 
-See the repository README for distro package names, configuration, and
-troubleshooting.
+The repository root also has an optional `install.sh` helper for dependency
+checks, font installation, and preview rendering. It does not use sudo or install
+distro packages.
+
+### NixOS
+
+A plain `python3` on NixOS does not expose the Pango/PangoCairo GObject
+Introspection typelibs, which causes `Namespace Pango not available`. Use the
+wrapper in the repository root at `nix/arabic-poem-python.nix`; it provides
+PyGObject, pycairo, the Pango/PangoCairo/cairo/GLib typelibs, and fontconfig.
+
+Add the wrapper to your configuration and set the plugin's **Python command** to
+the absolute path:
+
+```text
+/run/current-system/sw/bin/arabic-poem-python
+```
+
+Noctalia's NixOS systemd module clears the service `PATH`, so do not use a bare
+`python3` there. Full NixOS module, Home Manager, and verification examples are
+in `NIXOS.md` in the repository root.
 
 ## Settings
 

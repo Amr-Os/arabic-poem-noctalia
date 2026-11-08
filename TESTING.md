@@ -1,124 +1,83 @@
 # Friend-run test checklist
 
-This checklist is for testing the plugin on the machine that runs Noctalia.
-Nothing here should be run by the repository author on your machine. Copy the
-commands into your own terminal and fix any `fail` line before moving on.
+This checklist is for the machine that runs Noctalia. The recommended path is
+to add the repository as a **source** in Noctalia's settings and install the
+plugin from the Plugins page. You do **not** need to clone the repository or run
+`install.sh`.
 
 Record the result of each step. The pass criteria are at the end.
 
-## 0. Environment
+## 1. Add the source from Noctalia's UI
+
+1. Open **Settings → Plugins → Sources**.
+2. Click **Add Source**.
+3. Name it `arabic-poem` (the name is only local).
+4. Choose **Git**.
+5. Enter:
+
+   ```text
+   https://github.com/Amr-Os/arabic-poem-noctalia.git
+   ```
+
+6. Save the source.
+7. Go back to **Settings → Plugins**, find **Arabic Poem**, and enable it.
+   If it is not listed yet, press **Update** on the source or reopen the plugin
+   page.
+
+Expected: the plugin row shows **Arabic Poem** and is enabled, with no
+“incompatible plugin API” badge. Noctalia v5 with plugin API 3+ is required.
+
+CLI equivalent:
 
 ```sh
-noctalia --version
-niri --version
-python3 --version
-echo "XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}"
-```
-
-Expected: Noctalia v5 or newer, niri, and Python 3.10+. If `noctalia` or
-`niri` is not on `PATH`, use the absolute path in the commands below.
-
-## 1. Dependencies and fonts
-
-From the repository root:
-
-```sh
-./install.sh --check
-```
-
-Expected:
-
-- `PyGObject + Pango + PangoCairo`, `pycairo`, and `hijridate` are `ok`.
-- `Amiri Quran` and `Amiri` are `ok`.
-- `PanoramaNaskh`, `Shafigh`, and `Thmanyah` may be `warn`; they are optional.
-- `noctalia`, `niri`, and `magick` may be `warn` only if you are not using
-  them; `noctalia` is required for the next steps.
-
-If a required line is `fail`, install the package and re-run. For the Python
-package:
-
-```sh
-python3 -m pip install --user hijridate
-```
-
-Install the bundled fonts:
-
-```sh
-./install.sh --fonts
-fc-match 'Amiri Quran'
-fc-match 'Amiri'
-```
-
-Expected: both `fc-match` commands return Amiri/Amiri Quran, not DejaVu Sans.
-
-## 2. Renderer smoke test
-
-Render a standalone preview:
-
-```sh
-./install.sh --preview
-```
-
-Expected output includes `Poem rotated: ...` and `Date updated: ...`. Inspect
-the PNGs under `~/.local/share/arabic-poem/render/`:
-
-```sh
-ls -l ~/.local/share/arabic-poem/render/
-magick identify ~/.local/share/arabic-poem/render/*.png
-python3 -m json.tool ~/.local/share/arabic-poem/render/render.json | head -60
-```
-
-Expected:
-
-- The poem PNG is `1760x760` (2× of 880×380).
-- The weekday PNG is `1400x280` (2× of 700×140).
-- The date PNG is `1400x240` (2× of 700×120).
-- `render.json` has `poem`, `weekday`, and `date` objects with `png`,
-  `width`, and `height`.
-- Open the PNGs on a dark background. Arabic letters are connected, the two
-  poem columns end at the same separator position, and the text is light with
-  a subtle shadow. There are no boxes or disconnected letters.
-
-Check the selection without writing:
-
-```sh
-PLUGIN="$PWD/arabic-poem"
-DATA="$HOME/.local/share/arabic-poem"
-python3 "$PLUGIN/renderer/update.py" \
-  --plugin-dir "$PLUGIN" --data-dir "$DATA" --test --force
-```
-
-Expected: `Entry`, `Poet`, `Font`, `Scale`, `Weekday`, and `Hijri date` are
-printed; no files are written.
-
-## 3. Enable the plugin
-
-```sh
-./install.sh --source
-./install.sh --enable
+noctalia msg plugins source add arabic-poem git https://github.com/Amr-Os/arabic-poem-noctalia.git
+noctalia msg plugins enable amr/arabic-poem
 noctalia msg plugins list
 ```
 
-Expected: the list contains `amr/arabic-poem` and it is enabled. If the source
-name `arabic-poem` already exists, remove the old source from Noctalia's plugin
-settings first, or add this path manually with a different source name:
+If the source name already exists, remove the old source first or use another
+name.
 
-```sh
-noctalia msg plugins source add arabic-poem-2 path "$PWD"
-```
+## 2. First render and fonts
 
-Check that the service started:
+Wait a few seconds after enabling the plugin, then request the service status:
 
 ```sh
 noctalia msg plugin amr/arabic-poem:service all status
 ```
 
-Expected: a Noctalia notification with a `Data:` path, a poem id, a font, a
-date, and a weekday index. **Write down the `Data:` path**; it is the plugin
-data directory used by the widgets. It is different from the preview directory
-in step 2.
+Expected: a Noctalia notification with:
 
-## 4. Add the three desktop widgets
+- a `Data:` path (the plugin data directory),
+- a poem id,
+- a font name,
+- a Hijri date,
+- a weekday index.
+
+**Write down the `Data:` path**; the desktop widgets use that directory.
+
+The first render also copies the bundled Amiri/Amiri Quran fonts into
+`~/.local/share/fonts/Amiri` and refreshes fontconfig. Verify:
+
+```sh
+fc-match 'Amiri Quran'
+fc-match 'Amiri'
+```
+
+Expected: both return Amiri/Amiri Quran, not DejaVu Sans. If they do not, run the
+optional fallback from a clone of the repository:
+
+```sh
+./install.sh --fonts
+fc-cache -f
+```
+
+`hijridate` is optional; the plugin ships an Umm al-Qura fallback, so a UI-only
+install does not need `pip install`.
+
+## 3. Add the three desktop widgets
+
+Open the desktop-widget editor from **Settings → Desktop → Widgets**, or run:
 
 ```sh
 noctalia msg desktop-widgets-edit
@@ -141,27 +100,21 @@ Place them on the single monitor:
 Expected:
 
 - All three tiles are visible and have no rectangular background.
-- The poem is the same text/font as the current `render.json` in the plugin
-  data directory.
+- The poem matches the current `render.json` in the plugin data directory.
 - The weekday and Hijri date match the local day.
-- No Arabic text is rendered by Rubik; the glyphs come from the PNGs.
+- Arabic letters are connected and there are no boxes or disconnected glyphs.
 
-If a tile is blank, go to step 8 and check the plugin data directory and
-`render.log`.
+If a tile is blank, check the plugin data directory and `render.log` (step 6).
 
-## 5. Manual rotation
+## 4. Manual rotation and refresh
 
 ### Bar button (optional)
 
 Add `amr/arabic-poem:refresh` to a bar from Noctalia's bar settings, then click
 it.
 
-Expected:
-
-- A notification says `Poem rotated: ...`.
-- The poem changes to the next entry.
-- The font may change to the next available font.
-- The weekday/date stay the same unless the local date changed.
+Expected: a notification says `Poem rotated: ...`; the poem changes; the font
+may change; the weekday/date stay the same unless the local date changed.
 
 ### niri keybinds
 
@@ -179,8 +132,7 @@ current poem without rotating.
 
 Expected:
 
-- `Mod+Shift+P`: the same rotation as the bar button. The notification may
-  appear if **Notify on manual refresh** is on.
+- `Mod+Shift+P`: the poem advances to the next entry.
 - `Mod+Shift+R`: the same poem id and font are re-rendered; the PNG mtimes and
   `render.json` mtime change; the poem does not advance.
 
@@ -191,83 +143,71 @@ noctalia msg plugin amr/arabic-poem:service all force
 noctalia msg plugin amr/arabic-poem:service all refresh
 ```
 
-Expected: `force` rotates and `refresh` re-renders the current poem. Run `force`
-twice; the second call should rotate again, not show the render lock error. If it
-does show `Another render is already running`, wait a moment and retry.
+`force` rotates; `refresh` re-renders the current poem. If a second `force`
+immediately reports `Another render is already running`, wait a moment and
+retry; the lock prevents overlapping renders.
 
-## 6. Refresh and date-only
+## 5. Rotation interval and offline behavior
 
-Refresh the current poem without rotating:
+The default is 4 hours **and** online. `force` bypasses both. To test the real
+due/online path:
 
-```sh
-noctalia msg plugin amr/arabic-poem:service all refresh
-```
-
-Expected:
-
-- The notification says `Poem refreshed: ...` (same poem id and font).
-- The PNG mtimes and `render.json` mtime change.
-- The poem does not advance in the corpus.
-
-Re-render only the date tiles:
-
-```sh
-PLUGIN="$PWD/arabic-poem"
-DATA="<the Data: path from step 3>"
-python3 "$PLUGIN/renderer/update.py" \
-  --plugin-dir "$PLUGIN" --data-dir "$DATA" --date-only --notify
-```
-
-Expected: `Date updated: ...`; the weekday/date PNG mtimes change; the poem
-PNG is untouched. The desktop widgets update within about a second.
-
-## 7. Rotation interval and offline behavior
-
-The default is 4 hours **and** online. `force` bypasses both; this step tests
-the real due/online path. Existing configs that still use the old 8-hour default
-are migrated to 4 hours on first load; a custom interval is preserved.
-
-1. Get the plugin data directory from `status`.
+1. Get the `Data:` path from the status notification.
 2. Back up `state.json` in that directory.
 3. Set `last_change` in `state.json` to an old ISO timestamp, for example
-   `2020-01-01T00:00:00+00:00`. Keep the rest of the JSON valid.
-4. Run the renderer's due path against the plugin data directory:
+   `2020-01-01T00:00:00+00:00`. Keep the JSON valid.
+4. Run the service check:
 
-```sh
-PLUGIN="$PWD/arabic-poem"
-DATA="<the Data: path from step 3>"
-python3 "$PLUGIN/renderer/update.py" \
-  --plugin-dir "$PLUGIN" --data-dir "$DATA" --if-due --notify
-```
+   ```sh
+   noctalia msg plugin amr/arabic-poem:service all refresh
+   ```
 
-Expected while online: `Poem rotated: ...` and a new poem id. Expected while
-offline: `Offline: keeping the current poem.` and the poem id stays. The service
-will retry on its next 5-minute tick after connectivity returns.
+   This refreshes without rotating, so use the renderer directly if you have a
+   clone, or wait for the next 5-minute service tick:
+
+   ```sh
+   PLUGIN="$PWD/arabic-poem"
+   DATA="<the Data: path from step 2>"
+   python3 "$PLUGIN/renderer/update.py" \
+     --plugin-dir "$PLUGIN" --data-dir "$DATA" --if-due --notify
+   ```
+
+Expected while online: the poem rotates. Expected while offline:
+`Offline: keeping the current poem.` and the poem id stays. The service retries
+on its next tick.
 
 5. Restore the original `state.json` if you want to keep the old schedule.
 
-## 8. Logs and recovery
+## 6. Logs and recovery
 
-The renderer writes `render.log` in the plugin data directory. Check it after a
-failed render:
+The renderer writes `render.log` in the plugin data directory:
 
 ```sh
-tail -n 50 "<the Data: path from step 3>/render.log"
+tail -n 50 "<the Data: path from step 2>/render.log"
 ```
 
-Also check Noctalia's own log output (the terminal or journal where you launch
-Noctalia). Common causes:
+Also check Noctalia's own log output. Common causes:
 
-- `python3` not found → set **Python command** in plugin settings to the
+- `python3` not found → set **Python command** in the plugin settings to the
   absolute interpreter path.
-- `No module named gi` / `cairo` / `hijridate` → install the dependency from
-  step 1.
-- Arabic boxes → fonts missing; run `./install.sh --fonts` and `fc-cache -f`.
-- Widgets blank but PNGs exist → the widgets are reading a different data
-  directory; use the service `force`/`refresh` commands so it writes to the
-  plugin data directory.
+- `No module named gi` / `cairo` → install PyGObject and pycairo for your
+  distro, then re-enable the plugin.
+- `Namespace Pango not available` / `Typelib file for namespace 'Pango' not
+  found` on NixOS → use `nix/arabic-poem-python.nix` and set **Python command**
+  to `/run/current-system/sw/bin/arabic-poem-python`. Verify with:
 
-## 9. Uninstall
+  ```sh
+  arabic-poem-python -c 'import gi; gi.require_version("Pango", "1.0"); gi.require_version("PangoCairo", "1.0"); from gi.repository import Pango, PangoCairo; print("Pango ok")'
+  ```
+
+  Full steps: `NIXOS.md`.
+- Arabic boxes → fonts missing; wait for the automatic font copy, or run
+  `./install.sh --fonts` from a clone and `fc-cache -f`.
+- Widgets blank but PNGs exist → the widgets are reading a different data
+  directory; use the service commands so the renderer writes to the plugin data
+  directory.
+
+## 7. Uninstall
 
 Use Noctalia's plugin settings to disable `amr/arabic-poem`, remove the three
 desktop widgets, and remove the `arabic-poem` source if you no longer want it.
@@ -279,29 +219,27 @@ plugin.
 
 The test passes when all of these are true:
 
-- [ ] `./install.sh --check` has no required `fail` lines.
-- [ ] `./install.sh --fonts` installs Amiri and Amiri Quran; `fc-match` finds
-      both.
-- [ ] `./install.sh --preview` writes three transparent PNGs and valid
-      `render.json`.
+- [ ] The `arabic-poem` git source is added from the UI and `Arabic Poem` is
+      enabled from the Plugins page.
+- [ ] `status` reports the plugin data directory, poem, font, date, and weekday.
+- [ ] `fc-match` finds Amiri and Amiri Quran; no font step was required.
 - [ ] The three desktop widgets display the poem, weekday, and Hijri date with
       **Background off** and no boxes/disconnected Arabic.
-- [ ] Bar button and `Mod+Shift+P` both rotate the poem and produce a
-      notification when enabled.
+- [ ] The bar button and `Mod+Shift+P` rotate the poem.
 - [ ] `Mod+Shift+R` and `refresh` re-render the same poem/font without rotating.
-- [ ] `--date-only` re-renders only the date tiles.
-- [ ] With `last_change` set to an old time and the machine online, `--if-due`
+- [ ] With `last_change` set to an old time and the machine online, the due path
       rotates; with the machine offline, it keeps the current poem.
-- [ ] `status` reports the plugin data directory, poem, font, date, and
-      weekday index.
 - [ ] `render.log` has no unexpected traceback.
+- [ ] On NixOS, the wrapper check prints `Pango ok` and the plugin's **Python
+      command** points at the wrapper, not a bare `python3`.
 
 ## Report back
 
 Please send:
 
 - Noctalia/niri/Python versions.
-- The `--check` output (or just the fail/warn lines).
-- The three PNGs or a screenshot of the desktop.
+- Whether the source appeared after **Add Source**, and whether the plugin could
+  be enabled from the UI.
 - The `status` notification text (redact anything private).
+- A screenshot of the three desktop widgets.
 - Any `render.log` tail or Noctalia error.

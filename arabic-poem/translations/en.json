@@ -1,6 +1,6 @@
 {
   "settings.python.label": "Python command",
-  "settings.python.description": "Interpreter used to run the PNG renderer. Use an absolute path if python3 is not on PATH.",
+  "settings.python.description": "Interpreter used to run the PNG renderer. Use an absolute path if python3 is not on PATH. On NixOS, use the arabic-poem-python wrapper (see NIXOS.md) to fix the Pango GI namespace.",
   "settings.interval_minutes.label": "Check interval (minutes)",
   "settings.interval_minutes.description": "How often the service checks whether the poem is due and whether the local date changed.",
   "settings.notify.label": "Notify on manual refresh",

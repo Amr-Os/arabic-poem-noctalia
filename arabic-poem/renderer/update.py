@@ -1112,6 +1112,13 @@ def main(argv: list[str] | None = None) -> int:
     ).expanduser().resolve()
 
     create = not (args.status or args.test)
+    if create:
+        installed_fonts = pc.ensure_bundled_fonts(plugin_dir)
+        if installed_fonts:
+            print(
+                "Installed bundled fonts: " + ", ".join(installed_fonts),
+                flush=True,
+            )
     config = pc.load_config(plugin_dir, data_dir, create=create)
     corpus = pc.load_corpus(plugin_dir)
     entries = pc.enabled_entries(corpus)

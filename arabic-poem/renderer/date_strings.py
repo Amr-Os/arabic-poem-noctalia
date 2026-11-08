@@ -10,11 +10,10 @@ try:
 except ImportError:  # older installations
     try:
         from hijri_converter import Gregorian  # type: ignore
-    except ImportError as exc:  # pragma: no cover - dependency error path
-        raise ImportError(
-            "The Python package 'hijridate' is required. "
-            "Install it with: python3 -m pip install --user hijridate"
-        ) from exc
+    except ImportError:
+        # The plugin ships a Umm al-Qura fallback so a Noctalia UI install
+        # does not require a separate ``pip install hijridate``.
+        from hijri_fallback import Gregorian  # type: ignore
 
 
 # Elongated weekdays with tatweel (ـ), matching the existing GNOME widget.
