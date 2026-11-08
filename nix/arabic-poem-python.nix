@@ -12,11 +12,16 @@ let
     pycairo
   ]);
 
+  # Pango's GIR also depends on HarfBuzz, GObject/Gio, and cairo.  Missing any
+  # of those typelibs makes gi.require_version("Pango", "1.0") fail with
+  # "Namespace Pango not available", even when Pango itself is present.
   giTypelibPath = pkgs.lib.makeSearchPath "lib/girepository-1.0" [
     pkgs.pango
+    pkgs.harfbuzz
     pkgs.cairo
     pkgs.gobject-introspection
     pkgs.glib
+    pkgs.freetype
   ];
 
   runtimeLibs = [

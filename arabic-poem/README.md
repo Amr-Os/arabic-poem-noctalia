@@ -114,7 +114,7 @@ distro packages.
 A plain `python3` on NixOS does not expose the Pango/PangoCairo GObject
 Introspection typelibs, which causes `Namespace Pango not available`. Use the
 wrapper in the repository root at `nix/arabic-poem-python.nix`; it provides
-PyGObject, pycairo, the Pango/PangoCairo/cairo/GLib typelibs, and fontconfig.
+PyGObject, pycairo, the Pango/PangoCairo/HarfBuzz/cairo/GLib typelibs, and fontconfig.
 
 Add the wrapper to your configuration and set the plugin's **Python command** to
 the absolute path:

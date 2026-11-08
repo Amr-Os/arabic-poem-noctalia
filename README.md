@@ -119,7 +119,7 @@ Typelib file for namespace 'Pango' not found
 
 الحل الجاهز في [`nix/arabic-poem-python.nix`](nix/arabic-poem-python.nix):
 غلاف Python يضمّ PyGObject وpycairo، ويضبط `GI_TYPELIB_PATH` لـ Pango
-وPangoCairo وcairo وGLib، ويضع `fontconfig` على `PATH` حتى يعمل `fc-cache`
+وPangoCairo وHarfBuzz وcairo وGLib، ويضع `fontconfig` على `PATH` حتى يعمل `fc-cache`
 عند نسخ الخطوط تلقائيًا.
 
 مثال مختصر داخل إعداد NixOS:

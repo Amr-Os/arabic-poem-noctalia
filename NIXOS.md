@@ -10,9 +10,9 @@ Typelib file for namespace 'Pango' not found
 ```
 
 The wrapper in [`nix/arabic-poem-python.nix`](nix/arabic-poem-python.nix) fixes
-that by adding `Pango`, `PangoCairo`, `cairo`, `GLib`, and `GObject` typelibs to
-`GI_TYPELIB_PATH`, and by putting `fontconfig` on `PATH` so the automatic font
-copy can run `fc-cache`.
+that by adding `Pango`, `PangoCairo`, `HarfBuzz`, `cairo`, `GLib`, and
+`GObject` typelibs to `GI_TYPELIB_PATH`, and by putting `fontconfig` on `PATH`
+so the automatic font copy can run `fc-cache`.
 
 ## 1. Add the wrapper to your NixOS configuration
 
