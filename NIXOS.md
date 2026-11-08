@@ -175,8 +175,27 @@ status notification contains a `Data:` path, poem, font, and Hijri date.
 ### `Namespace Pango not available`
 
 The Python command is not using the wrapper, or `GI_TYPELIB_PATH` is missing
-Pango. Set the plugin's **Python command** to the absolute wrapper path and
-restart the plugin. Verify with the `Pango ok` command above.
+Pango **or one of Pango's own GI dependencies** (`HarfBuzz-0.0`, `GObject-2.0`,
+`Gio-2.0`, or `cairo-1.0`). Set the plugin's **Python command** to the absolute
+wrapper path and restart the plugin. Verify with the `Pango ok` command above.
+
+To inspect the path the wrapper sees:
+
+```sh
+echo "$GI_TYPELIB_PATH" | tr ':' '\n'
+find /nix/store -maxdepth 5 \
+  \( -name 'Pango-1.0.typelib' -o -name 'PangoCairo-1.0.typelib' \
+     -o -name 'HarfBuzz-0.0.typelib' \) 2>/dev/null
+```
+
+If the wrapper is old and lacks `harfbuzz`/`freetype`, replace
+`nix/arabic-poem-python.nix` with the current version and rebuild. If
+`HarfBuzz-0.0.typelib` is genuinely absent from your nixpkgs, override HarfBuzz
+with introspection enabled:
+
+```nix
+harfbuzz = pkgs.harfbuzz.override { withIntrospection = true; };
+```
 
 ### `No module named gi`
 
