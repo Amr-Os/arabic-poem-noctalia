@@ -1,0 +1,77 @@
+# Arabic Poem for Noctalia
+#
+# The service rotates a poem every 8 hours (only when online), redraws the
+# Arabic weekday and Hijri date at local midnight, and writes transparent PNGs
+# plus render/render.json. The three desktop widgets simply display those
+# images; the optional bar widget triggers a manual rotation.
+#
+# All Arabic shaping, tatweel justification, and font selection happen in the
+# Python/Pango renderer, so no Arabic text passes through Rubik or the shell UI.
+
+id           = "amr/arabic-poem"
+name         = "Arabic Poem"
+version      = "1.0.0"
+plugin_api   = 3
+author       = "amr"
+license      = "MIT"
+icon         = "book"
+description  = "Rotating Arabic poems with the weekday and Hijri date as desktop widgets."
+tags         = ["arabic", "poem", "desktop", "date", "hijri"]
+dependencies = [
+  "python3",
+  "python3-gobject (PyGObject)",
+  "gir1.2-pango-1.0",
+  "gir1.2-cairo-1.0",
+  "hijridate (Python package)",
+  "fontconfig",
+  "Amiri / Amiri Quran fonts",
+]
+
+# ---------------------------------------------------------------------------
+# Plugin-level settings (shared by the service and the bar widget)
+# ---------------------------------------------------------------------------
+[[setting]]
+key             = "python"
+type            = "string"
+label_key       = "settings.python.label"
+description_key = "settings.python.description"
+default         = "python3"
+
+[[setting]]
+key             = "interval_minutes"
+type            = "int"
+label_key       = "settings.interval_minutes.label"
+description_key = "settings.interval_minutes.description"
+default         = 5
+min             = 1
+max             = 60
+
+[[setting]]
+key             = "notify"
+type            = "bool"
+label_key       = "settings.notify.label"
+description_key = "settings.notify.description"
+default         = true
+
+# ---------------------------------------------------------------------------
+# Entries
+# ---------------------------------------------------------------------------
+[[service]]
+id    = "service"
+entry = "entries/service.luau"
+
+[[desktop_widget]]
+id    = "poem"
+entry = "entries/poem.luau"
+
+[[desktop_widget]]
+id    = "weekday"
+entry = "entries/weekday.luau"
+
+[[desktop_widget]]
+id    = "date"
+entry = "entries/date.luau"
+
+[[widget]]
+id    = "refresh"
+entry = "entries/refresh.luau"

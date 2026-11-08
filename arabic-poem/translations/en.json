@@ -1,0 +1,8 @@
+{
+  "settings.python.label": "Python command",
+  "settings.python.description": "Interpreter used to run the PNG renderer. Use an absolute path if python3 is not on PATH.",
+  "settings.interval_minutes.label": "Check interval (minutes)",
+  "settings.interval_minutes.description": "How often the service checks whether the poem is due and whether the local date changed.",
+  "settings.notify.label": "Notify on manual refresh",
+  "settings.notify.description": "Show a notification when the poem is rotated from the bar button or the IPC command."
+}

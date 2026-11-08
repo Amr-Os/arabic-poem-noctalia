@@ -1,0 +1,20 @@
+[[plugin]]
+id           = "amr/arabic-poem"
+name         = "Arabic Poem"
+version      = "1.0.0"
+author       = "amr"
+license      = "MIT"
+icon         = "book"
+description  = "Rotating Arabic poems with the weekday and Hijri date as desktop widgets."
+deprecated   = false
+plugin_api   = 3
+tags         = ["arabic", "poem", "desktop", "date", "hijri"]
+dependencies = [
+  "python3",
+  "python3-gobject (PyGObject)",
+  "gir1.2-pango-1.0",
+  "gir1.2-cairo-1.0",
+  "hijridate (Python package)",
+  "fontconfig",
+  "Amiri / Amiri Quran fonts",
+]

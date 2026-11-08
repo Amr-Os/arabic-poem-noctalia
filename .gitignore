@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+
+# Renderer output / local state (the plugin writes these to its Noctalia data dir)
+render/
+render.lock
+render.log
+state.json
+config.json
+*.tmp.*
+
+# Editor/OS noise
+.DS_Store
+*.swp
+*.swo
