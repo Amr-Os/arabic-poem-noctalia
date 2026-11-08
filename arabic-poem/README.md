@@ -14,7 +14,7 @@ without putting Arabic text through Rubik or a shell widget.
 - **Refresh** (`amr/arabic-poem:refresh`) — optional bar button that rotates
   immediately.
 - **Service** (`amr/arabic-poem:service`) — checks every 5 minutes, rotates
-  after 8 hours when online, and redraws the date at local midnight.
+  after 4 hours when online, and redraws the date at local midnight.
 
 ## How it renders
 
@@ -50,6 +50,24 @@ Manual rotation:
 noctalia msg plugin amr/arabic-poem:service all force
 ```
 
+Refresh the current poem without rotating:
+
+```sh
+noctalia msg plugin amr/arabic-poem:service all refresh
+```
+
+niri keybinds:
+
+```kdl
+binds {
+    Mod+Shift+P { spawn "noctalia" "msg" "plugin" "amr/arabic-poem:service" "all" "force"; }
+    Mod+Shift+R { spawn "noctalia" "msg" "plugin" "amr/arabic-poem:service" "all" "refresh"; }
+}
+```
+
+`Mod+Shift+P` rotates to the next poem; `Mod+Shift+R` refreshes the current
+poem image without rotating.
+
 Status:
 
 ```sh
@@ -75,6 +93,8 @@ troubleshooting.
 
 Layout, colors, canvas sizes, and fonts live in the renderer's `config.json` in
 the plugin data directory. The status notification prints that directory.
+Existing configs that still use the old 8-hour default are migrated to 4 hours
+on first load; custom intervals are preserved.
 
 ## License
 

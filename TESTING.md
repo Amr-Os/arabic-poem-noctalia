@@ -163,30 +163,37 @@ Expected:
 - The font may change to the next available font.
 - The weekday/date stay the same unless the local date changed.
 
-### niri keybind
+### niri keybinds
 
 Add to `~/.config/niri/config.kdl`:
 
 ```kdl
 binds {
     Mod+Shift+P { spawn "noctalia" "msg" "plugin" "amr/arabic-poem:service" "all" "force"; }
+    Mod+Shift+R { spawn "noctalia" "msg" "plugin" "amr/arabic-poem:service" "all" "refresh"; }
 }
 ```
 
-Reload niri, then press `Mod+Shift+P`.
+Reload niri, then press `Mod+Shift+P` to rotate and `Mod+Shift+R` to refresh the
+current poem without rotating.
 
-Expected: the same rotation as the bar button. The notification may appear if
-**Notify on manual refresh** is on.
+Expected:
+
+- `Mod+Shift+P`: the same rotation as the bar button. The notification may
+  appear if **Notify on manual refresh** is on.
+- `Mod+Shift+R`: the same poem id and font are re-rendered; the PNG mtimes and
+  `render.json` mtime change; the poem does not advance.
 
 ### IPC directly
 
 ```sh
 noctalia msg plugin amr/arabic-poem:service all force
+noctalia msg plugin amr/arabic-poem:service all refresh
 ```
 
-Expected: same result. Run it twice; the second call should rotate again, not
-show the render lock error. If it does show `Another render is already running`,
-wait a moment and retry.
+Expected: `force` rotates and `refresh` re-renders the current poem. Run `force`
+twice; the second call should rotate again, not show the render lock error. If it
+does show `Another render is already running`, wait a moment and retry.
 
 ## 6. Refresh and date-only
 
@@ -216,8 +223,9 @@ PNG is untouched. The desktop widgets update within about a second.
 
 ## 7. Rotation interval and offline behavior
 
-The default is 8 hours **and** online. `force` bypasses both; this step tests
-the real due/online path.
+The default is 4 hours **and** online. `force` bypasses both; this step tests
+the real due/online path. Existing configs that still use the old 8-hour default
+are migrated to 4 hours on first load; a custom interval is preserved.
 
 1. Get the plugin data directory from `status`.
 2. Back up `state.json` in that directory.
@@ -280,7 +288,7 @@ The test passes when all of these are true:
       **Background off** and no boxes/disconnected Arabic.
 - [ ] Bar button and `Mod+Shift+P` both rotate the poem and produce a
       notification when enabled.
-- [ ] `refresh` re-renders the same poem/font.
+- [ ] `Mod+Shift+R` and `refresh` re-render the same poem/font without rotating.
 - [ ] `--date-only` re-renders only the date tiles.
 - [ ] With `last_change` set to an old time and the machine online, `--if-due`
       rotates; with the machine offline, it keeps the current poem.

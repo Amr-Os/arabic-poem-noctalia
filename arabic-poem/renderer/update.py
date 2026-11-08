@@ -7,7 +7,7 @@ shaping, justification, and font selection happens here in Pango.
 
 Default mode (used by the Noctalia service):
   * If no poem has been shown yet, show the first one.
-  * If 8 hours have passed AND the machine is online, show the next poem.
+  * If 4 hours have passed AND the machine is online, show the next poem.
   * If offline, keep the current poem and retry on the next service tick.
   * Each new poem also gets a new font from ``verse_fonts``.
 
@@ -720,8 +720,8 @@ def _status(plugin_dir: Path, data_dir: Path, config: dict, entries: list[dict],
         print("Current    : (none)")
     last = pc.parse_iso(state.get("last_change"))
     print(f"Last change: {last.isoformat() if last else '(never)'}")
-    due_at = pc.next_due(state, float(config.get("interval_hours", 8)))
-    print(f"Due now    : {pc.due(state, float(config.get('interval_hours', 8)))}")
+    due_at = pc.next_due(state, float(config.get("interval_hours", 4)))
+    print(f"Due now    : {pc.due(state, float(config.get('interval_hours', 4)))}")
     print(f"Next due   : {due_at.isoformat() if due_at else '(now)'}")
     print(f"Queue      : {len(state.get('queue', []))} pending")
     print(f"Font       : {state.get('font') or '(not chosen yet)'}")
@@ -761,7 +761,7 @@ def _test(
         force=args.force,
         refresh=args.refresh,
         online=True,
-        interval=float(config.get("interval_hours", 8)),
+        interval=float(config.get("interval_hours", 4)),
     )
     family, _font_changed = _select_font(
         config,
@@ -878,7 +878,7 @@ def _render(
     args: argparse.Namespace,
 ) -> int:
     prev_meta = _prev_meta(data_dir)
-    interval = float(config.get("interval_hours", 8))
+    interval = float(config.get("interval_hours", 4))
 
     if args.date_only:
         return _render_date_only(data_dir, config, prev_meta, notify=args.notify)

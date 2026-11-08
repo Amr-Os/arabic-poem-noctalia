@@ -24,9 +24,9 @@ DEFAULT_FONT = "Amiri Quran"
 FALLBACK_FONT = "Amiri"
 
 DEFAULT_CONFIG: dict[str, Any] = {
-    "config_version": 1,
+    "config_version": 2,
     # Rotation
-    "interval_hours": 8,
+    "interval_hours": 4,
     # Poem typography
     "font_size_pt": 31.25,
     "max_width_px": 820,
@@ -148,6 +148,16 @@ def load_config(
     loaded = load_json(data_dir / "config.json", {})
     if isinstance(loaded, dict):
         config.update(loaded)
+        # v1 used an 8-hour default.  Move only the untouched old default to
+        # the new 4-hour default; a deliberately custom interval is preserved.
+        try:
+            loaded_version = int(loaded.get("config_version", 1))
+        except (TypeError, ValueError):
+            loaded_version = 1
+        if loaded_version < 2:
+            if config.get("interval_hours") == 8:
+                config["interval_hours"] = 4
+            config["config_version"] = 2
     if create:
         ensure_dir(data_dir)
         save_json(data_dir / "config.json", config)

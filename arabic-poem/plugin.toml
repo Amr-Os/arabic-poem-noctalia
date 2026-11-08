@@ -1,6 +1,6 @@
 # Arabic Poem for Noctalia
 #
-# The service rotates a poem every 8 hours (only when online), redraws the
+# The service rotates a poem every 4 hours (only when online), redraws the
 # Arabic weekday and Hijri date at local midnight, and writes transparent PNGs
 # plus render/render.json. The three desktop widgets simply display those
 # images; the optional bar widget triggers a manual rotation.
