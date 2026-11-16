@@ -23,7 +23,7 @@ shaping, tashkeel, tatweel justification, equal-width hemistichs, and font
 selection all happen in the renderer. The widgets only display the resulting
 image with `ui.image`, so they never shape Arabic themselves.
 
-The 36-poem corpus, themes, and tashkeel settings are in
+The 42-poem corpus, themes, and tashkeel settings are in
 `data/poems.json`. The default fonts are Amiri Quran and Amiri; PanoramaNaskh,
 Shafigh, and Thmanyah are optional and fall back to Amiri.
 

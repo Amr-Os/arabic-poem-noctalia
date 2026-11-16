@@ -197,6 +197,35 @@ with introspection enabled:
 harfbuzz = pkgs.harfbuzz.override { withIntrospection = true; };
 ```
 
+### `python3: command not found`
+
+If the service log contains:
+
+```text
+/bin/sh: line 1: python3: command not found
+```
+
+Noctalia is still launching the renderer with the default bare `python3`. The
+NixOS module clears the service `PATH`, so `python3` is not resolved even when it
+is available in your interactive shell.
+
+Set the plugin's **Python command** to the absolute wrapper path:
+
+```text
+/run/current-system/sw/bin/arabic-poem-python
+```
+
+You can confirm the path with:
+
+```sh
+command -v arabic-poem-python
+```
+
+Then disable and re-enable the plugin. If you configured Noctalia
+declaratively, set `plugin_settings."amr/arabic-poem".python` to
+`"${poemPython}/bin/arabic-poem-python"` as shown above, rather than relying on
+`python3`.
+
 ### `No module named gi`
 
 The interpreter is not the wrapper's interpreter. Use
